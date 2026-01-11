@@ -1,0 +1,11 @@
+
+{
+  "login": "Login",
+  "email_phone": "Email / Phone",
+  "password": "Password",
+  "report_issue": "Report an Issue",
+  "location": "Enter Location",
+  "description": "Describe the issue in detail",
+  "signup_text": "Do not have any account? sign up",
+  "submit": "Submit Issue"
+}

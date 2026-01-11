@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CivicBridge - Report Issue</title>
+  <style>
+    body {font-family: Arial, sans-serif;background: #f5f6fa;margin: 0;padding: 0;}
+    .navbar {background: #0a3d62;color: #fff;padding: 12px 20px;display: flex;justify-content: space-between;align-items: center;}
+    .navbar h1 {margin: 0;font-size: 20px;}
+    .navbar a {color: #fff;text-decoration: none;margin-left: 20px;font-size: 14px;}
+    .navbar a:hover {text-decoration: underline;}
+    .container {max-width: 650px;margin: 30px auto;background: #fff;padding: 25px;border-radius: 12px;box-shadow: 0 6px 16px rgba(0,0,0,0.15);}
+    h2 {text-align: center;margin-bottom: 20px;color: #0a3d62;}
+    label {display: block;margin: 8px 0 5px;font-size: 14px;color: #333;}
+    input, select, textarea {width: 100%;padding: 12px;font-size: 14px;margin-bottom: 14px;border: 1px solid #ccc;border-radius: 8px;box-sizing: border-box;}
+    textarea {resize: vertical;min-height: 80px;}
+    button {width: 100%;padding: 12px;border: none;background: #0a3d62;color: #fff;font-size: 15px;border-radius: 8px;cursor: pointer;}
+    button:hover {background: #3c6382;}
+    #issueMsg {margin-top: 15px;font-size: 14px;text-align: center;}
+    .copy-btn {display: inline-block;margin-top: 6px;padding: 6px 12px;font-size: 13px;border: none;border-radius: 6px;background: #3c6382;color: #fff;cursor: pointer;}
+    .copy-btn:hover {background: #0a3d62;}
+    #languageSwitcher {margin-bottom: 15px;width: 100%;padding: 8px;border-radius: 8px;border: 1px solid #ccc;}
+    #startSpeech {margin-bottom: 12px;background: #3c6382;}
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <h1>CivicBridge</h1>
+    <div>
+      <a href="index.html">Report Issue</a>
+      <a href="status.html">Track Issue</a>
+      <a href="login.html">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <select id="languageSwitcher">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी</option>
+      <option value="mr">मराठी</option>
+    </select>
+
+    <h2 id="reportIssueTitle">Report an Issue</h2>
+    <form id="issueForm">
+      <label id="locationLabel">Location</label>
+      <input type="text" id="issueLocation" placeholder="Enter location" required>
+
+      <label id="issueTypeLabel">What is the issue?</label>
+      <select id="issueType" required></select>
+
+      <label id="problemLabel">Select Problem Statement</label>
+      <select id="problemStatement"></select>
+
+      <textarea id="issueDescription" placeholder="Describe the issue in detail..."></textarea>
+      <button type="button" id="startSpeech">🎤 Speak Instead</button>
+
+      <label id="uploadLabel">Upload Image</label>
+      <input type="file" id="issueImage" accept="image/*">
+
+      <button type="submit" id="submitBtn">Submit Issue</button>
+    </form>
+    <p id="issueMsg"></p>
+  </div>
+
+  <script>
+    // -------------------------
+    // Translations
+    // -------------------------
+    const translations = {
+      en: {
+        report_issue: "Report an Issue",
+        location: "Location",
+        issue_type: "What is the issue?",
+        issue_type_placeholder: "-- Select Issue --",
+        issue_options: ["Garbage", "Water Leakage", "Road Damage", "Street Light", "Other"],
+        problem_label: "Select Problem Statement",
+        problem_options: [
+          "Road blocked with garbage",
+          "Water leaking on street",
+          "Damaged road surface",
+          "Street lights not working",
+          "Other"
+        ],
+        description_placeholder: "e.g., We are facing this problem on the road...",
+        upload: "Upload Image",
+        submit: "Submit Issue"
+      },
+      hi: {
+        report_issue: "समस्या दर्ज करें",
+        location: "स्थान",
+        issue_type: "समस्या क्या है?",
+        issue_type_placeholder: "-- समस्या चुनें --",
+        issue_options: ["कचरा", "पानी का रिसाव", "सड़क क्षति", "सड़क की रोशनी", "अन्य"],
+        problem_label: "समस्या विवरण चुनें",
+        problem_options: [
+          "सड़क पर कचरा जमा है",
+          "सड़क पर पानी रिसाव",
+          "सड़क का सतह खराब है",
+          "सड़क की लाइट काम नहीं कर रही",
+          "अन्य"
+        ],
+        description_placeholder: "उदा., हमें सड़क पर यह समस्या हो रही है...",
+        upload: "छवि अपलोड करें",
+        submit: "समस्या सबमिट करें"
+      },
+      mr: {
+        report_issue: "तक्रार नोंदवा",
+        location: "स्थान",
+        issue_type: "समस्या कोणती आहे?",
+        issue_type_placeholder: "-- समस्या निवडा --",
+        issue_options: ["कचर्‍याचे टाकाऊ", "पाणी गळती", "रस्ता खराब", "स्ट्रिट लाइट", "इतर"],
+        problem_label: "समस्येचे वर्णन निवडा",
+        problem_options: [
+          "रस्त्यावर कचरा आहे",
+          "रस्त्यावर पाणी गळत आहे",
+          "रस्ता खराब आहे",
+          "स्ट्रिट लाईट काम करत नाही",
+          "इतर"
+        ],
+        description_placeholder: "उदा., आम्हाला रस्त्यावर ही समस्या भासत आहे...",
+        upload: "प्रतिमा अपलोड करा",
+        submit: "समस्या सबमिट करा"
+      }
+    };
+
+    const issueType = document.getElementById("issueType");
+    const problemSelect = document.getElementById("problemStatement");
+    const issueDescription = document.getElementById("issueDescription");
+    const problemLabel = document.getElementById("problemLabel");
+
+    function loadLanguage(lang) {
+      const t = translations[lang];
+      if(!t) return;
+
+      document.getElementById("reportIssueTitle").innerText = t.report_issue;
+      document.getElementById("locationLabel").innerText = t.location;
+      document.getElementById("issueTypeLabel").innerText = t.issue_type;
+      document.getElementById("uploadLabel").innerText = t.upload;
+      document.getElementById("submitBtn").innerText = t.submit;
+      document.getElementById("issueDescription").placeholder = t.description_placeholder;
+
+      // Issue type dropdown
+      issueType.innerHTML = "";
+      let placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = t.issue_type_placeholder;
+      issueType.appendChild(placeholder);
+      t.issue_options.forEach(opt => {
+        let o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        issueType.appendChild(o);
+      });
+
+      // Problem statement dropdown
+      problemSelect.innerHTML = "";
+      problemLabel.innerText = t.problem_label;
+      t.problem_options.forEach(opt => {
+        let o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        problemSelect.appendChild(o);
+      });
+
+      // Set description if problem statement changes
+      problemSelect.onchange = () => {
+        if(problemSelect.value !== t.problem_options[t.problem_options.length-1]){
+          issueDescription.value = problemSelect.value;
+          issueDescription.disabled = true;
+        } else {
+          issueDescription.value = "";
+          issueDescription.disabled = false;
+        }
+      };
+    }
+
+    document.getElementById("languageSwitcher").addEventListener("change", e => {
+      loadLanguage(e.target.value);
+    });
+
+    loadLanguage("en");
+
+    // -------------------------
+    // Speech-to-Text
+    // -------------------------
+    const startSpeechBtn = document.getElementById("startSpeech");
+    if(startSpeechBtn){
+      startSpeechBtn.addEventListener("click", function(e){
+        e.preventDefault();
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        const lang = document.getElementById("languageSwitcher").value;
+        recognition.lang = (lang === "hi") ? "hi-IN" : (lang === "mr") ? "mr-IN" : "en-IN";
+        recognition.start();
+        recognition.onresult = function(event){
+          issueDescription.value = event.results[0][0].transcript;
+        };
+        recognition.onerror = function(event){
+          alert("Speech recognition error: "+event.error);
+        };
+      });
+    }
+
+    // -------------------------
+    // Issue Form Submission
+    // -------------------------
+    const issueForm = document.getElementById("issueForm");
+    if(issueForm){
+      issueForm.addEventListener("submit", function(e){
+        e.preventDefault();
+        const location = document.getElementById("issueLocation").value;
+        const type = issueType.value;
+        const description = issueDescription.value;
+        const fileInput = document.getElementById("issueImage");
+        const currentUser = sessionStorage.getItem("currentUser") || "guest";
+        let imageData = "";
+        if(fileInput.files && fileInput.files[0]){
+          const reader = new FileReader();
+          reader.onload = function(evt){
+            imageData = evt.target.result;
+            saveIssue(location,type,description,imageData,currentUser);
+          };
+          reader.readAsDataURL(fileInput.files[0]);
+        } else {
+          saveIssue(location,type,description,imageData,currentUser);
+        }
+      });
+    }
+
+    function saveIssue(location,type,description,imageData,user){
+      const issueId = "ISSUE-"+Math.floor(10000 + Math.random()*90000);
+      let issues = JSON.parse(localStorage.getItem("issues")||"[]");
+      issues.push({id:issueId,location,type,description,image:imageData,user,status:"Pending"});
+      localStorage.setItem("issues",JSON.stringify(issues));
+      const msgBox = document.getElementById("issueMsg");
+      msgBox.style.color="green";
+      msgBox.innerHTML = `✅ Issue submitted successfully!<br><b>Your Issue ID: ${issueId}</b><br><button class="copy-btn" onclick="copyId('${issueId}')">Copy ID</button>`;
+      issueForm.reset();
+      loadLanguage(document.getElementById("languageSwitcher").value);
+    }
+
+    function copyId(id){
+      navigator.clipboard.writeText(id).then(()=>{document.getElementById("issueMsg").innerHTML += "<br>📋 Copied to clipboard!";});
+    }
+  </script>
+</body>
+</html>

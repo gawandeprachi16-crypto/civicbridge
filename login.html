@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CivicBridge - Login / Signup</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #0a3d62, #3c6382);
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      width: 360px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    h2 {
+      color: #0a3d62;
+      margin: 0 0 14px 0;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin: 8px 0 6px;
+      font-size: 13px;
+      color: #333;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    .password-wrapper {
+      position: relative;
+    }
+    .password-wrapper input {
+      padding-right: 44px;
+    }
+    .toggle-pass {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 11px;
+      border-radius: 8px;
+      border: none;
+      background: #0a3d62;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .switch {
+      background: #3c6382;
+      margin-top: 8px;
+    }
+    #authMsg {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #d9534f;
+      text-align: center;
+    }
+    #languageSwitcher {
+      margin-bottom: 10px;
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <!-- Language Selector -->
+    <select id="languageSwitcher">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी</option>
+      <option value="mr">मराठी</option>
+    </select>
+
+    <!-- Login Box -->
+    <div id="loginBox">
+      <h2 id="loginTitle">Login</h2>
+      <form id="loginForm">
+        <label id="loginAsLabel">Login as</label>
+        <select id="loginRole">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+
+        <label id="emailPhoneLabel">Email / Phone</label>
+        <input id="loginUser" type="text" required>
+
+        <label id="passwordLabel">Password</label>
+        <div class="password-wrapper">
+          <input id="loginPass" type="password" required>
+        </div>
+
+        <button type="submit" id="loginBtn">Login</button>
+      </form>
+      <button class="switch" type="button" onclick="switchForm('signupBox')" id="toSignupBtn">
+        Don't have an account? Sign Up
+      </button>
+    </div>
+
+    <!-- Signup Box -->
+    <div id="signupBox" style="display:none;">
+      <h2 id="signupTitle">Sign Up</h2>
+      <form id="signupForm">
+        <label id="signupEmailLabel">Email / Phone</label>
+        <input id="signupUser" type="text" required>
+
+        <label id="signupAadharLabel">Aadhar.No</label>
+        <input id="signupAadhar" type="number" required>
+
+        <label id="signupPasswordLabel">Password</label>
+        <div class="password-wrapper">
+          <input id="signupPass" type="password" required>
+        </div>
+
+        <label id="confirmPasswordLabel">Confirm Password</label>
+        <div class="password-wrapper">
+          <input id="confirmPass" type="password" required>
+        </div>
+
+        <button type="submit" id="signupBtn">Sign Up</button>
+      </form>
+      <button class="switch" type="button" onclick="switchForm('loginBox')" id="toLoginBtn">
+        Already have an account? Login
+      </button>
+    </div>
+
+    <div id="authMsg"></div>
+  </div>
+
+  <script>
+    // Toggle form between login and signup
+    function switchForm(showId) {
+      document.getElementById('loginBox').style.display = (showId === 'loginBox') ? 'block' : 'none';
+      document.getElementById('signupBox').style.display = (showId === 'signupBox') ? 'block' : 'none';
+      document.getElementById('authMsg').innerText = '';
+    }
+
+    // User storage helpers
+    function getUsers() {
+      try { return JSON.parse(localStorage.getItem('users') || '[]'); }
+      catch(e) { return []; }
+    }
+    function saveUsers(u) {
+      localStorage.setItem('users', JSON.stringify(u));
+    }
+
+    // Signup logic
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('signupUser').value.trim();
+      const pass = document.getElementById('signupPass').value;
+      const conf = document.getElementById('confirmPass').value;
+      const msg = document.getElementById('authMsg');
+      msg.style.color = 'red';
+
+      if (pass !== conf) {
+        msg.innerText = 'Passwords do not match!';
+        return;
+      }
+
+      const users = getUsers();
+      if (users.find(u => u.email === email)) {
+        msg.innerText = 'Account already exists. Please login.';
+        return;
+      }
+
+      users.push({ email, password: pass });
+      saveUsers(users);
+
+      msg.style.color = 'green';
+      msg.innerText = 'Signup successful — please login.';
+      switchForm('loginBox');
+    });
+
+    // Login logic
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const role = document.getElementById('loginRole').value;
+      const email = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value;
+      const msg = document.getElementById('authMsg');
+      msg.style.color = 'red';
+
+      if (role === 'admin') {
+        // Admin login
+        if (email === 'admin@gmail.com' && pass === 'admin@gmail.com') {
+          sessionStorage.setItem('role', 'admin');
+          window.location.href = 'admin.html';
+        } else {
+          msg.innerText = 'Invalid admin credentials.';
+        }
+        return;
+      }
+
+      // User login
+      const users = getUsers();
+      const found = users.find(u => u.email === email && u.password === pass);
+      if (found) {
+        sessionStorage.setItem('role', 'user');
+        sessionStorage.setItem('currentUser', email);
+        window.location.href = 'index.html';
+      } else {
+        msg.innerText = 'Invalid user credentials.';
+      }
+    });
+
+    // -------------------------
+    // Language Switcher
+    // -------------------------
+    const translations = {
+      en: {
+        login: "Login",
+        login_as: "Login as",
+        email_phone: "Email / Phone",
+        password: "Password",
+        login_btn: "Login",
+        to_signup: "Don't have an account? Sign Up",
+        signup: "Sign Up",
+        signup_email: "Email / Phone",
+        signup_aadhar: "Aadhar.No",
+        signup_password: "Password",
+        confirm_password: "Confirm Password",
+        signup_btn: "Sign Up",
+        to_login: "Already have an account? Login"
+      },
+      hi: {
+        login: "लॉगिन",
+        login_as: "लॉगिन प्रकार",
+        email_phone: "ईमेल / फ़ोन",
+        password: "पासवर्ड",
+        login_btn: "लॉगिन",
+        to_signup: "खाता नहीं है? साइन अप करें",
+        signup: "साइन अप",
+        signup_email: "ईमेल / फ़ोन",
+        signup_aadhar: "आधार नंबर",
+        signup_password: "पासवर्ड",
+        confirm_password: "पासवर्ड की पुष्टि करें",
+        signup_btn: "साइन अप",
+        to_login: "पहले से खाता है? लॉगिन करें"
+      },
+      mr: {
+        login: "लॉगिन",
+        login_as: "लॉगिन प्रकार",
+        email_phone: "ईमेल / फोन",
+        password: "पासवर्ड",
+        login_btn: "लॉगिन",
+        to_signup: "खाते नाही? साइन अप करा",
+        signup: "साइन अप",
+        signup_email: "ईमेल / फोन",
+        signup_aadhar: "आधार क्र.",
+        signup_password: "पासवर्ड",
+        confirm_password: "पासवर्ड पुष्टी करा",
+        signup_btn: "साइन अप",
+        to_login: "आधीच खाते आहे? लॉगिन करा"
+      }
+    };
+
+    function loadLanguage(lang) {
+      const t = translations[lang];
+      if (!t) return;
+
+      document.getElementById("loginTitle").innerText = t.login;
+      document.getElementById("loginAsLabel").innerText = t.login_as;
+      document.getElementById("emailPhoneLabel").innerText = t.email_phone;
+      document.getElementById("passwordLabel").innerText = t.password;
+      document.getElementById("loginBtn").innerText = t.login_btn;
+      document.getElementById("toSignupBtn").innerText = t.to_signup;
+
+      document.getElementById("signupTitle").innerText = t.signup;
+      document.getElementById("signupEmailLabel").innerText = t.signup_email;
+      document.getElementById("signupAadharLabel").innerText = t.signup_aadhar;
+      document.getElementById("signupPasswordLabel").innerText = t.signup_password;
+      document.getElementById("confirmPasswordLabel").innerText = t.confirm_password;
+      document.getElementById("signupBtn").innerText = t.signup_btn;
+      document.getElementById("toLoginBtn").innerText = t.to_login;
+    }
+
+    document.getElementById("languageSwitcher").addEventListener("change", (e) => {
+      loadLanguage(e.target.value);
+    });
+
+    // Default language
+    loadLanguage("en");
+  </script>
+</body>
+</html>

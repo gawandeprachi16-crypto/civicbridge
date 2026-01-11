@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CivicBridge - Track Issue</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      margin: 0;
+      padding: 0;
+    }
+    /* Navbar */
+    .navbar {
+      background: #0a3d62;
+      color: #fff;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .navbar h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    .navbar a {
+      color: #fff;
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 14px;
+    }
+    .navbar a:hover {
+      text-decoration: underline;
+    }
+
+    /* Container */
+    .container {
+      max-width: 650px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #0a3d62;
+    }
+    label {
+      display: block;
+      margin: 8px 0 5px;
+      font-size: 14px;
+      color: #333;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      margin-bottom: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      background: #0a3d62;
+      color: #fff;
+      font-size: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #3c6382;
+    }
+    #statusResult {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background: #f1f2f6;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    #statusResult img {
+      max-width: 100%;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <div class="navbar">
+    <h1>CivicBridge</h1>
+    <div>
+      <a href="index.html">Report Issue</a>
+      <a href="status.html">Track Issue</a>
+      <a href="login.html">Logout</a>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="container">
+    <h2>Track Your Issue</h2>
+    <form id="statusForm">
+      <label>Enter Issue ID</label>
+      <input type="text" id="issueIdInput" placeholder="e.g. ISSUE-12345" required>
+      <button type="submit">Check Status</button>
+    </form>
+    <div id="statusResult"></div>
+  </div>
+
+  <script>
+    function getIssues() {
+      return JSON.parse(localStorage.getItem("issues") || "[]");
+    }
+
+    document.getElementById("statusForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const issueId = document.getElementById("issueIdInput").value.trim();
+      const issues = getIssues();
+      const issue = issues.find(i => i.id === issueId);
+
+      const resultBox = document.getElementById("statusResult");
+      if (issue) {
+        resultBox.innerHTML = `
+          <strong>Issue ID:</strong> ${issue.id}<br>
+          <strong>Location:</strong> ${issue.location}<br>
+          <strong>Type:</strong> ${issue.type}<br>
+          <strong>Description:</strong> ${issue.description || "N/A"}<br>
+          <strong>Status:</strong> ${issue.status}<br>
+          ${issue.image ? `<strong>Image:</strong><br><img src="${issue.image}" alt="Issue Image">` : ""}
+        `;
+      } else {
+        resultBox.innerHTML = "<span style='color:red;'>❌ No issue found with this ID.</span>";
+      }
+    });
+  </script>
+</body>
+</html>

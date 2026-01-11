@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Civic Eye - Admin & Public Portal</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f2f2f2; }
+  .container { max-width: 700px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  .hidden { display: none; }
+  h2 { text-align: center; margin-bottom: 20px; }
+  label { display: block; margin-top: 10px; font-weight: bold; }
+  input, select, button { width: 100%; padding: 10px; margin-top: 5px; }
+  button { background: #007BFF; color: white; border: none; cursor: pointer; border-radius: 5px; }
+  button:hover { background: #0056b3; }
+  .issue-card { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 10px; background: #fafafa; }
+  .issue-card img { max-width: 200px; display: block; margin-top: 10px; }
+  .resolve-btn { background: green; color: white; margin-top:5px; }
+  .delete-btn { background: red; color: white; margin-left: 10px; margin-top:5px; }
+  .verify-btn { background: orange; color: white; margin-top:5px; }
+  .dept { font-style: italic; color: #555; }
+  .actions { margin-top: 20px; text-align: center; }
+  #languageSwitcher { margin-bottom: 15px; width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ccc; }
+  .proof-upload { margin-top:5px; }
+  .status-info { font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Language Selector -->
+  <select id="languageSwitcher">
+    <option value="en">English</option>
+    <option value="hi">हिन्दी</option>
+    <option value="mr">मराठी</option>
+  </select>
+
+  <!-- Login Screen -->
+  <div id="loginBox">
+    <h2 id="loginTitle">Admin Login</h2>
+    <form id="loginForm">
+      <label id="emailLabel">Email</label>
+      <input type="email" id="email" required>
+      <label id="passwordLabel">Password</label>
+      <input type="password" id="password" required>
+      <button type="submit" id="loginBtn">Login</button>
+    </form>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden">
+    <h2 id="dashboardTitle">Admin Dashboard</h2>
+    <button onclick="logout()" id="logoutBtn">Logout</button>
+
+    <div class="actions">
+      <label for="deptFilter" id="filterLabel"><b>Filter by Department:</b></label>
+      <select id="deptFilter">
+        <option value="All">All Departments</option>
+        <option value="Water Department">Water Department</option>
+        <option value="Electricity Department">Electricity Department</option>
+        <option value="Sanitation Department">Sanitation Department</option>
+        <option value="Public Works Department">Public Works Department</option>
+        <option value="General Department">General Department</option>
+      </select>
+      <button onclick="showStats()" id="statsBtn">📊 View Statistics</button>
+    </div>
+
+    <!-- Stats Placeholder -->
+    <div id="statsBox" class="hidden">
+      <h3 id="statsTitle">Issue Statistics</h3>
+      <p id="statsContent"></p>
+    </div>
+
+    <!-- Issues List -->
+    <div id="adminIssues"></div>
+  </div>
+
+</div>
+
+<script>
+// --- Admin credentials ---
+const ADMIN_EMAIL = "admin@gmail.com";
+const ADMIN_PASS = "12345";
+
+// --- Elements ---
+const loginBox = document.getElementById("loginBox");
+const dashboard = document.getElementById("dashboard");
+const loginForm = document.getElementById("loginForm");
+const deptFilter = document.getElementById("deptFilter");
+const langSelector = document.getElementById("languageSwitcher");
+
+// --- Multi-language labels ---
+const translations = {
+  en: { loginTitle:"Admin Login", emailLabel:"Email", passwordLabel:"Password", loginBtn:"Login", dashboardTitle:"Admin Dashboard", logoutBtn:"Logout", filterLabel:"Filter by Department:", statsBtn:"📊 View Statistics", statsTitle:"Issue Statistics", noIssues:"No issues found for this department.", markResolved:"Mark Resolved", delete:"Delete Issue", forward:"Forward to Department:", selectDept:"-- Select Department --", uploadProof:"Upload proof:", verify:"Verify Issue", pending:"Pending", resolved:"Resolved", forwarded:"Forwarded", verified:"Verified", notVerified:"Not Verified" },
+  hi: { loginTitle:"एडमिन लॉगिन", emailLabel:"ईमेल", passwordLabel:"पासवर्ड", loginBtn:"लॉगिन", dashboardTitle:"एडमिन डैशबोर्ड", logoutBtn:"लॉगआउट", filterLabel:"विभाग द्वारा फ़िल्टर करें:", statsBtn:"📊 आंकड़े देखें", statsTitle:"समस्या के आँकड़े", noIssues:"इस विभाग के लिए कोई समस्या नहीं मिली।", markResolved:"समाधान के रूप में चिह्नित करें", delete:"हटाएँ", forward:"विभाग में अग्रेषित करें:", selectDept:"-- विभाग चुनें --", uploadProof:"साबित छवि अपलोड करें:", verify:"समस्या सत्यापित करें", pending:"लंबित", resolved:"समाधान", forwarded:"अग्रेषित", verified:"सत्यापित", notVerified:"असत्यापित" },
+  mr: { loginTitle:"अॅडमिन लॉगिन", emailLabel:"ईमेल", passwordLabel:"पासवर्ड", loginBtn:"लॉगिन", dashboardTitle:"अॅडमिन डॅशबोर्ड", logoutBtn:"लॉगआउट", filterLabel:"विभागानुसार फिल्टर करा:", statsBtn:"📊 आकडेवारी पहा", statsTitle:"समस्येची आकडेवारी", noIssues:"या विभागासाठी कोणतीही समस्या नाही.", markResolved:"संपन्न म्हणून चिन्हांकित करा", delete:"काढा", forward:"विभागास पाठवा:", selectDept:"-- विभाग निवडा --", uploadProof:"पुरावा अपलोड करा:", verify:"समस्या पडताळा", pending:"प्रलंबित", resolved:"संपन्न", forwarded:"अग्रेषित", verified:"सत्यापित", notVerified:"असत्यापित" }
+};
+
+// --- Language switching ---
+function loadLanguage(lang){
+  const t = translations[lang];
+  if(!t) return;
+  document.getElementById("loginTitle").innerText = t.loginTitle;
+  document.getElementById("emailLabel").innerText = t.emailLabel;
+  document.getElementById("passwordLabel").innerText = t.passwordLabel;
+  document.getElementById("loginBtn").innerText = t.loginBtn;
+  document.getElementById("dashboardTitle").innerText = t.dashboardTitle;
+  document.getElementById("logoutBtn").innerText = t.logoutBtn;
+  document.getElementById("filterLabel").innerText = t.filterLabel;
+  document.getElementById("statsBtn").innerText = t.statsBtn;
+  document.getElementById("statsTitle").innerText = t.statsTitle;
+
+  document.querySelectorAll(".resolve-btn").forEach(btn => btn.innerText = t.markResolved);
+  document.querySelectorAll(".delete-btn").forEach(btn => btn.innerText = t.delete);
+  document.querySelectorAll(".verify-btn").forEach(btn => btn.innerText = t.verify);
+  document.querySelectorAll(".proof-label").forEach(lbl => lbl.innerText = t.uploadProof);
+  document.querySelectorAll(".forward-label").forEach(lbl => lbl.innerText = t.forward);
+  document.querySelectorAll("select.issue-forward option:first-child").forEach(opt => opt.textContent = t.selectDept);
+}
+
+langSelector.addEventListener("change", ()=>{loadLanguage(langSelector.value);});
+
+// --- Login check ---
+loginForm.addEventListener("submit", e=>{
+  e.preventDefault();
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  if(email===ADMIN_EMAIL && password===ADMIN_PASS){
+    alert("Login successful!");
+    loginBox.classList.add("hidden");
+    dashboard.classList.remove("hidden");
+    loadIssues();
+    loadLanguage(langSelector.value);
+  }else alert("Invalid email or password!");
+});
+
+// --- Load issues ---
+function loadIssues(){
+  let issues = JSON.parse(localStorage.getItem("issues")) || [];
+  const adminContainer = document.getElementById("adminIssues");
+  const selectedDept = deptFilter.value;
+  adminContainer.innerHTML = "";
+
+  let filteredIssues = selectedDept==="All"? issues: issues.filter(i=>i.department===selectedDept);
+  if(filteredIssues.length===0){ adminContainer.innerHTML = translations[langSelector.value].noIssues; return; }
+
+  const t = translations[langSelector.value];
+
+  filteredIssues.forEach(issue=>{
+    const proofLabelId = `proof-label-${issue.id}`;
+    const proofInputId = `proof-${issue.id}`;
+    const forwardSelectId = `forward-${issue.id}`;
+    const verifiedBtnId = `verify-${issue.id}`;
+
+    adminContainer.innerHTML += `
+      <div class="issue-card">
+        <p><b>ID:</b> ${issue.id}</p>
+        <p><b>User:</b> ${issue.user||"N/A"}</p>
+        <p><b>Location:</b> ${issue.location||"N/A"}</p>
+        <p><b>Title:</b> ${issue.type||"N/A"}</p>
+        <p><b>Description:</b> ${issue.description||"N/A"}</p>
+        <p class="dept"><b>Forwarded To:</b> ${issue.department}</p>
+        <p><b>Status:</b> ${issue.status}</p>
+        <p><b>Days since submission:</b> ${Math.floor((new Date() - new Date(issue.submittedAt))/86400000)}</p>
+        ${issue.resolvedAt? `<p><b>Resolved At:</b> ${new Date(issue.resolvedAt).toLocaleString()}</p>`:""}
+        ${issue.proofImage? `<img src="${issue.proofImage}" alt="Proof Image">`:"<p>No proof yet</p>"}
+        <p><b>Verified by user:</b> ${issue.verifiedByUser? t.verified: t.notVerified}</p>
+
+        <label id="${proofLabelId}" class="proof-label">${t.uploadProof}</label>
+        <input type="file" id="${proofInputId}" class="proof-upload" accept="image/*">
+
+        <button class="resolve-btn" onclick="markResolved('${issue.id}')">${t.markResolved}</button>
+        <button class="delete-btn" onclick="deleteIssue('${issue.id}')">${t.delete}</button>
+
+        <label class="forward-label">${t.forward}</label>
+        <select id="${forwardSelectId}" class="issue-forward" onchange="forwardIssue('${issue.id}', this.value)">
+          <option value="">${t.selectDept}</option>
+          <option value="Water Department">Water Department</option>
+          <option value="Electricity Department">Electricity Department</option>
+          <option value="Sanitation Department">Sanitation Department</option>
+          <option value="Public Works Department">Public Works Department</option>
+          <option value="General Department">General Department</option>
+        </select>
+
+        ${!issue.verifiedByUser && issue.status==="Resolved" ? 
+          `<button id="${verifiedBtnId}" class="verify-btn" onclick="verifyIssue('${issue.id}')">${t.verify}</button>` 
+        : ""}
+      </div>
+    `;
+  });
+}
+
+// --- Forward issue ---
+function forwardIssue(id, department){
+  if(!department) return;
+  let issues = JSON.parse(localStorage.getItem("issues")) || [];
+  issues = issues.map(issue=>issue.id===id? {...issue, department, status:"Forwarded"}: issue);
+  localStorage.setItem("issues", JSON.stringify(issues));
+  loadIssues();
+}
+
+// --- Mark resolved (with proof check) ---
+function markResolved(id){
+  const proofInput = document.getElementById(`proof-${id}`);
+  if(!proofInput.files[0]){
+    alert("Please upload proof image before marking resolved!");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    let issues = JSON.parse(localStorage.getItem("issues")) || [];
+    issues = issues.map(issue=>issue.id===id? {...issue, status:"Resolved", proofImage:evt.target.result, resolvedAt:new Date().toISOString()}:issue);
+    localStorage.setItem("issues", JSON.stringify(issues));
+    loadIssues();
+  };
+  reader.readAsDataURL(proofInput.files[0]);
+}
+
+// --- Delete issue ---
+function deleteIssue(id){
+  let issues = JSON.parse(localStorage.getItem("issues")) || [];
+  issues = issues.filter(issue=>issue.id!==id);
+  localStorage.setItem("issues", JSON.stringify(issues));
+  loadIssues();
+}
+
+// --- Verify by user ---
+function verifyIssue(id){
+  let issues = JSON.parse(localStorage.getItem("issues")) || [];
+  issues = issues.map(issue=>issue.id===id? {...issue, verifiedByUser:true}:issue);
+  localStorage.setItem("issues", JSON.stringify(issues));
+  alert("Issue verified!");
+  loadIssues();
+}
+
+// --- Show stats ---
+function showStats(){
+  let issues = JSON.parse(localStorage.getItem("issues")) || [];
+  const pending = issues.filter(i=>i.status==="Pending").length;
+  const resolved = issues.filter(i=>i.status==="Resolved").length;
+  const forwarded = issues.filter(i=>i.status==="Forwarded").length;
+  document.getElementById("statsContent").innerHTML = `
+    Total Issues: ${issues.length}<br>
+    Pending: ${pending}<br>
+    Resolved: ${resolved}<br>
+    Forwarded: ${forwarded}
+  `;
+  document.getElementById("statsBox").classList.remove("hidden");
+}
+
+// --- Logout ---
+function logout(){
+  dashboard.classList.add("hidden");
+  loginBox.classList.remove("hidden");
+  loginForm.reset();
+}
+
+// --- Department filter ---
+deptFilter.addEventListener("change", loadIssues);
+</script>
+</body>
+</html>
